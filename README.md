@@ -1,15 +1,6 @@
-<div align="center">
-
 ## 🐍 snake.sh
 
-Snake written in Bash.
-
-| [Preview](./preview.gif) |
-| :----------------------: |
-
-</div>
-
-#
+Snake written in Bash
 
 ### Play
 
