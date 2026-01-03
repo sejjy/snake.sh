@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 #
-# snake.sh: Snake written in Bash.
+# snake.sh: Snake written in pure Bash
 #
 # Author:  Jesse Mirabel <sejjymvm@gmail.com>
 # Date:    January 3, 2026
@@ -55,6 +55,7 @@ tput() {
 		"civis") printf "\e[?25l" ;;
 		"cnorm") printf "\e[?25h" ;;
 		"cup")
+			# use x and y coordinates instead of line and column numbers
 			printf "\e[%d;%dH" $(($3 + OFFSET_Y + 1)) $(($2 + OFFSET_X + 1))
 			;;
 	esac
@@ -62,6 +63,7 @@ tput() {
 
 draw_char() {
 	tput cup $(($1 * 2 + 2)) $(($2 + 1))
+
 	case $3 in
 		"$CHAR_HEAD")  printf "%b%s%b" "$FG_MAGENTA" "$3" "$FG_RESET" ;;
 		"$CHAR_BODY")  printf "%b%s%b" "$FG_MAGENTA" "$3" "$FG_RESET" ;;
@@ -72,12 +74,14 @@ draw_char() {
 
 display_art() {
 	printf "%b" "$FG_GREEN"
+
 	tput cup $CENTER_X -5
 	printf "█▀▀ █▀█ █▀█ █ █ █▀▀   █▀▀ █ █"
 	tput cup $CENTER_X -4
 	printf "▀▀█ █ █ █▀█ █▀▄ █▀▀   ▀▀█ █▀█"
 	tput cup $CENTER_X -3
 	printf "▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀▀▀ ▀ ▀▀▀ ▀ ▀"
+
 	printf "%b" "$FG_RESET"
 }
 
@@ -94,8 +98,8 @@ draw_walls() {
 	local mid=$WALL_V$line$WALL_V
 	local bot=$WALL_BL${line// /$WALL_H}$WALL_BR
 
-	printf "%b" "$FG_GRAY"
 	tput cup 0 0
+	printf "%b" "$FG_GRAY"
 	printf "%s" "$top"
 
 	local y
@@ -115,18 +119,18 @@ draw_tiles() {
 	tiles=${tiles// /$CHAR_TILE }
 
 	printf "%b" "$FG_GRAY"
+
 	local y
 	for ((y = 0; y < GRID_HEIGHT; y++)); do
 		tput cup 2 $((y + 1))
 		printf "%s" "$tiles"
 	done
+
 	printf "%b" "$FG_RESET"
 }
 
 display_controls() {
 	tput cup $CENTER_X $CANVAS_HEIGHT
-	printf "↑ ← ↓ →              ^C"
-	tput cup $CENTER_X $((CANVAS_HEIGHT + 1))
 	printf "%s: move       esc: exit" "$KEY_U $KEY_L $KEY_D $KEY_R"
 }
 
@@ -205,7 +209,7 @@ update_snake_pos() {
 }
 
 handle_input() {
-	# accept escape sequences for arrow keys
+	# secretly accept arrow keys as input
 	local reply
 	if [[ $REPLY == $'\e' ]]; then
 		read -rsn 2 -t 0.001 reply
@@ -250,12 +254,14 @@ init_game() {
 game_over() {
 	tput rmcup # disable the alternative buffer
 	tput cnorm # make cursor visible
+
 	printf "%bgame over%b\n" "$FG_RED" "$FG_RESET"
 	display_score "end"
 }
 
 main() {
 	trap "game_over; printf '\n'" EXIT
+
 	tput smcup # enable the alternative buffer
 	tput civis # make cursor invisible
 
