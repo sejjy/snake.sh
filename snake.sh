@@ -57,55 +57,64 @@ draw_char() {
 	esac
 }
 
+display_art() {
+	printf "%b" "$FG_GREEN"
+	tput cup $CENTER_X -5
+	printf "█▀▀ █▀█ █▀█ █ █ █▀▀   █▀▀ █ █"
+	tput cup $CENTER_X -4
+	printf "▀▀█ █ █ █▀█ █▀▄ █▀▀   ▀▀█ █▀█"
+	tput cup $CENTER_X -3
+	printf "▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀▀▀ ▀ ▀▀▀ ▀ ▀"
+	printf "%b" "$FG_RESET"
+}
+
 display_score() {
 	if (($# == 0)); then tput cup $CENTER_X -1; fi
 	printf "score: %03d     highscore: %03d" $score $highscore
-}
-
-display_header() {
-	local header=(
-		"█▀▀ █▀█ █▀█ █ █ █▀▀   █▀▀ █ █"
-		"▀▀█ █ █ █▀█ █▀▄ █▀▀   ▀▀█ █▀█"
-		"▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀▀▀ ▀ ▀▀▀ ▀ ▀"
-	)
-	local i
-	for ((i = 0; i < ${#header[@]}; i++)); do
-		tput cup $CENTER_X $((-5 + i))
-		printf "%s" "${header[$i]}"
-	done
 }
 
 draw_walls() {
 	local line
 	printf -v line "%$((CANVAS_WIDTH - 2))s" ""
 
-	local top=$WALL_TL top+=${line// /$WALL_H} top+=$WALL_TR
-	local mid=$WALL_V  mid+=$line              mid+=$WALL_V
-	local bot=$WALL_BL bot+=${line// /$WALL_H} bot+=$WALL_BR
+	local top=$WALL_TL${line// /$WALL_H}$WALL_TR
+	local mid=$WALL_V$line$WALL_V
+	local bot=$WALL_BL${line// /$WALL_H}$WALL_BR
 
+	printf "%b" "$FG_GRAY"
 	tput cup 0 0
-	printf "%b%s%b" "$FG_GRAY" "$top" "$FG_RESET"
+	printf "%s" "$top"
 
 	local y
 	for ((y = 1; y < CANVAS_HEIGHT - 1; y++)); do
 		tput cup 0 $y
-		printf "%b%s%b" "$FG_GRAY" "$mid" "$FG_RESET"
+		printf "%s" "$mid"
 	done
 
 	tput cup 0 $((CANVAS_HEIGHT - 1))
-	printf "%b%s%b" "$FG_GRAY" "$bot" "$FG_RESET"
+	printf "%s" "$bot"
+	printf "%b" "$FG_RESET"
 }
 
-display_footer() {
-	local footer=(
-		"↑ ← ↓ →              ^C"
-		"$KEY_U $KEY_L $KEY_D $KEY_R: move       esc: exit"
-	)
-	local i
-	for ((i = 0; i < ${#footer[@]}; i++)); do
-		tput cup $CENTER_X $((CANVAS_HEIGHT + i))
-		printf "%s" "${footer[$i]}"
+draw_tiles() {
+	local tiles
+	printf -v tiles "%$((GRID_WIDTH))s" ""
+	tiles=${tiles// /$CHAR_TILE }
+
+	printf "%b" "$FG_GRAY"
+	local y
+	for ((y = 0; y < GRID_HEIGHT; y++)); do
+		tput cup 2 $((y + 1))
+		printf "%s" "$tiles"
 	done
+	printf "%b" "$FG_RESET"
+}
+
+display_controls() {
+	tput cup $CENTER_X $CANVAS_HEIGHT
+	printf "↑ ← ↓ →              ^C"
+	tput cup $CENTER_X $((CANVAS_HEIGHT + 1))
+	printf "%s: move       esc: exit" "$KEY_U $KEY_L $KEY_D $KEY_R"
 }
 
 update_apple_pos() {
@@ -150,13 +159,13 @@ validate_move() {
 	# check if the apple is eaten
 	if ((head_x == apple_x && head_y == apple_y)); then
 		is_eaten=true
-		score=$((score + 1))
 
 		body_x+=("${body_x[-1]}")
 		body_y+=("${body_y[-1]}")
 
-		update_apple_pos
+		score=$((score + 1))
 		display_score
+		update_apple_pos
 	fi
 }
 
@@ -169,7 +178,6 @@ update_snake_pos() {
 		body_x[i]=${body_x[i - 1]}
 		body_y[i]=${body_y[i - 1]}
 	done
-
 	body_x[0]=$prev_head_x
 	body_y[0]=$prev_head_y
 
@@ -184,7 +192,7 @@ update_snake_pos() {
 }
 
 handle_input() {
-	# accept arrow keys
+	# accept escape sequences for arrow keys
 	local reply
 	if [[ $REPLY == $'\e' ]]; then
 		read -rn 2 -t 0.001 reply
@@ -205,26 +213,19 @@ init_game() {
 	score=0
 	display_score
 
+	# set spawn points
+	apple_x=$((GRID_WIDTH / 2))
+	apple_y=$((GRID_HEIGHT / 2))
 	head_x=$((GRID_WIDTH / 4))
 	head_y=$((GRID_HEIGHT / 2))
 	body_x=($((head_x - 1)) $((head_x - 2)))
 	body_y=($((head_y)) $((head_y)))
-	apple_x=$((GRID_WIDTH / 2))
-	apple_y=$((GRID_HEIGHT / 2))
 
 	dir_x=0
 	dir_y=0
 
-	local tiles
-	printf -v tiles "%$((GRID_WIDTH))s" ""
-	tiles=${tiles// /$CHAR_TILE }
-
-	local y
-	for ((y = 0; y < GRID_HEIGHT; y++)); do
-		tput cup 2 $((y + 1))
-		printf "%b%s%b" "$FG_GRAY" "$tiles" "$FG_RESET"
-	done
-
+	# draw initial canvas
+	draw_tiles
 	local i
 	for ((i = 0; i < ${#body_x[@]}; i++)); do
 		draw_char "${body_x[$i]}" "${body_y[$i]}" "$CHAR_BODY"
@@ -255,9 +256,9 @@ main() {
 	OFFSET_Y=$(((LINES - CANVAS_HEIGHT) / 2))
 	CENTER_X=$(((CANVAS_WIDTH - 29) / 2))
 
-	display_header
+	display_art
 	draw_walls
-	display_footer
+	display_controls
 
 	score=0
 	highscore=0
