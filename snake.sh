@@ -3,6 +3,9 @@
 #
 # snake.sh: Snake written in Bash.
 #
+# Author:  Jesse Mirabel <sejjymvm@gmail.com>
+# Date:    January 3, 2026
+# License: MIT
 
 DELAY=0.15
 GRID_HEIGHT=20
