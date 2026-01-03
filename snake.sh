@@ -7,9 +7,14 @@
 # Date:    January 3, 2026
 # License: MIT
 
-DELAY=0.15
-GRID_HEIGHT=20
-GRID_WIDTH=20
+FG_RED="\e[31m"
+FG_GREEN="\e[32m"
+FG_YELLOW="\e[33m"
+FG_BLUE="\e[34m"
+FG_MAGENTA="\e[35m"
+FG_CYAN="\e[36m"
+FG_GRAY="\e[90m"
+FG_RESET="\e[39m"
 
 KEY_U="w"
 KEY_L="a"
@@ -28,13 +33,21 @@ WALL_TR="┐"
 WALL_BL="└"
 WALL_BR="┘"
 
-FG_RED="\e[31m"
-FG_GREEN="\e[32m"
-FG_YELLOW="\e[33m"
-FG_BLUE="\e[34m"
-FG_GRAY="\e[90m"
-FG_RESET="\e[39m"
+DELAY=0.15
 
+GRID_WIDTH=20
+GRID_HEIGHT=20
+CANVAS_WIDTH=$((GRID_WIDTH * 2 + 3))
+CANVAS_HEIGHT=$((GRID_HEIGHT + 2))
+
+# get the terminal size
+shopt -s checkwinsize; (:;:)
+
+OFFSET_X=$(((COLUMNS - CANVAS_WIDTH) / 2))
+OFFSET_Y=$(((LINES - CANVAS_HEIGHT) / 2))
+CENTER_X=$(((CANVAS_WIDTH - 29) / 2))
+
+# use raw escape sequences instead of forking out to `tput`
 tput() {
 	case $1 in
 		"smcup") printf "\e[?1049h" ;;
@@ -50,10 +63,10 @@ tput() {
 draw_char() {
 	tput cup $(($1 * 2 + 2)) $(($2 + 1))
 	case $3 in
-		"$CHAR_HEAD")  printf "%b%s%b" "$FG_BLUE" "$3" "$FG_RESET" ;;
-		"$CHAR_BODY")  printf "%b%s%b" "$FG_BLUE" "$3" "$FG_RESET" ;;
-		"$CHAR_APPLE") printf "%b%s%b" "$FG_RED"  "$3" "$FG_RESET" ;;
-		"$CHAR_TILE")  printf "%b%s%b" "$FG_GRAY" "$3" "$FG_RESET" ;;
+		"$CHAR_HEAD")  printf "%b%s%b" "$FG_MAGENTA" "$3" "$FG_RESET" ;;
+		"$CHAR_BODY")  printf "%b%s%b" "$FG_MAGENTA" "$3" "$FG_RESET" ;;
+		"$CHAR_APPLE") printf "%b%s%b" "$FG_RED"     "$3" "$FG_RESET" ;;
+		"$CHAR_TILE")  printf "%b%s%b" "$FG_GRAY"    "$3" "$FG_RESET" ;;
 	esac
 }
 
@@ -195,7 +208,7 @@ handle_input() {
 	# accept escape sequences for arrow keys
 	local reply
 	if [[ $REPLY == $'\e' ]]; then
-		read -rn 2 -t 0.001 reply
+		read -rsn 2 -t 0.001 reply
 		REPLY+=$reply
 	fi
 
@@ -237,24 +250,14 @@ init_game() {
 game_over() {
 	tput rmcup # disable the alternative buffer
 	tput cnorm # make cursor visible
-	stty echo  # turn on echoing
-
 	printf "%bgame over%b\n" "$FG_RED" "$FG_RESET"
 	display_score "end"
 }
 
 main() {
 	trap "game_over; printf '\n'" EXIT
-
 	tput smcup # enable the alternative buffer
 	tput civis # make cursor invisible
-	stty -echo # turn off echoing
-
-	CANVAS_WIDTH=$((GRID_WIDTH * 2 + 3))
-	CANVAS_HEIGHT=$((GRID_HEIGHT + 2))
-	OFFSET_X=$(((COLUMNS - CANVAS_WIDTH) / 2))
-	OFFSET_Y=$(((LINES - CANVAS_HEIGHT) / 2))
-	CENTER_X=$(((CANVAS_WIDTH - 29) / 2))
 
 	display_art
 	draw_walls
@@ -266,7 +269,8 @@ main() {
 
 	# game loop
 	while true; do
-		if IFS= read -rn 1 -t $DELAY; then handle_input; fi
+		if IFS= read -rsn 1 -t $DELAY; then handle_input; fi
+
 		# wait for input before moving
 		if ((dir_x == 0 && dir_y == 0)); then continue; fi
 
@@ -277,7 +281,7 @@ main() {
 
 		# validate new head position before moving the snake
 		if ! validate_move; then
-			read -rn 1
+			read -rsn 1
 			init_game
 			handle_input
 			continue
