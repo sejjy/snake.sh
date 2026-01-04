@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 #
-# snake.sh: Snake written in pure Bash
+# snake.sh: Snake written in Bash
 #
 # Author:  Jesse Mirabel <sejjymvm@gmail.com>
 # Date:    January 3, 2026
@@ -254,6 +254,7 @@ init_game() {
 game_over() {
 	tput rmcup # disable the alternative buffer
 	tput cnorm # make cursor visible
+	stty echo  # turn on echoing
 
 	printf "%bgame over%b\n" "$FG_RED" "$FG_RESET"
 	display_score "end"
@@ -264,6 +265,7 @@ main() {
 
 	tput smcup # enable the alternative buffer
 	tput civis # make cursor invisible
+	stty -echo # turn off echoing
 
 	display_art
 	draw_walls

@@ -1,6 +1,6 @@
 ## 🐍 snake.sh
 
-Snake written in pure Bash
+Snake written in Bash
 
 ### Play
 
