@@ -44,7 +44,7 @@ CANVAS_HEIGHT=$((GRID_HEIGHT + 2))
 shopt -s checkwinsize; (:;:)
 
 OFFSET_X=$(((COLUMNS - CANVAS_WIDTH) / 2))
-OFFSET_Y=$(((LINES - CANVAS_HEIGHT) / 2))
+OFFSET_Y=$(((LINES - CANVAS_HEIGHT + 4) / 2))
 CENTER_X=$(((CANVAS_WIDTH - 29) / 2))
 
 # use raw escape sequences instead of forking out to `tput`
