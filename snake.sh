@@ -7,6 +7,10 @@
 # Date:    January 3, 2026
 # License: MIT
 
+MD_RESET="\e[0m"
+MD_BOLD="\e[1m"
+MD_DIM="\e[2m"
+
 FG_RED="\e[31m"
 FG_GREEN="\e[32m"
 FG_YELLOW="\e[33m"
@@ -14,14 +18,13 @@ FG_BLUE="\e[34m"
 FG_MAGENTA="\e[35m"
 FG_CYAN="\e[36m"
 FG_GRAY="\e[90m"
-FG_RESET="\e[39m"
 
 KEY_U="w"
 KEY_L="a"
 KEY_D="s"
 KEY_R="d"
 
-CHAR_HEAD="O"
+CHAR_HEAD="0"
 CHAR_BODY="o"
 CHAR_TILE="."
 CHAR_APPLE="@"
@@ -54,10 +57,9 @@ tput() {
 		"rmcup") printf "\e[?1049l" ;;
 		"civis") printf "\e[?25l" ;;
 		"cnorm") printf "\e[?25h" ;;
-		"cup")
-			# use x and y coordinates instead of line and column numbers
-			printf "\e[%d;%dH" $(($3 + OFFSET_Y + 1)) $(($2 + OFFSET_X + 1))
-			;;
+		# use x and y coordinates instead of line and column numbers
+		"cup")   printf "\e[%d;%dH" $(($3 + OFFSET_Y + 1)) \
+			                        $(($2 + OFFSET_X + 1)) ;;
 	esac
 }
 
@@ -65,10 +67,10 @@ draw_char() {
 	tput cup $(($1 * 2 + 2)) $(($2 + 1))
 
 	case $3 in
-		"$CHAR_HEAD")  printf "%b%s%b" "$FG_MAGENTA" "$3" "$FG_RESET" ;;
-		"$CHAR_BODY")  printf "%b%s%b" "$FG_MAGENTA" "$3" "$FG_RESET" ;;
-		"$CHAR_APPLE") printf "%b%s%b" "$FG_RED"     "$3" "$FG_RESET" ;;
-		"$CHAR_TILE")  printf "%b%s%b" "$FG_GRAY"    "$3" "$FG_RESET" ;;
+		"$CHAR_HEAD")  printf "%b%s%b" "$MD_BOLD$FG_BLUE" "$3" "$MD_RESET" ;;
+		"$CHAR_BODY")  printf "%b%s%b" "$FG_BLUE"         "$3" "$MD_RESET" ;;
+		"$CHAR_APPLE") printf "%b%s%b" "$FG_RED"          "$3" "$MD_RESET" ;;
+		"$CHAR_TILE")  printf "%b%s%b" "$MD_DIM$FG_GRAY"  "$3" "$MD_RESET" ;;
 	esac
 }
 
@@ -77,17 +79,23 @@ display_art() {
 
 	tput cup $CENTER_X -5
 	printf "█▀▀ █▀█ █▀█ █ █ █▀▀   █▀▀ █ █"
+
 	tput cup $CENTER_X -4
 	printf "▀▀█ █ █ █▀█ █▀▄ █▀▀   ▀▀█ █▀█"
+
 	tput cup $CENTER_X -3
+	printf "%b" "$MD_DIM"
 	printf "▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀▀▀ ▀ ▀▀▀ ▀ ▀"
 
-	printf "%b" "$FG_RESET"
+	printf "%b" "$MD_RESET"
 }
 
 display_score() {
 	if (($# == 0)); then tput cup $CENTER_X -1; fi
-	printf "score: %03d     highscore: %03d" $score $highscore
+
+	printf "%bscore:%b %03d     %bhighscore:%b %03d" \
+		"$MD_DIM" "$MD_RESET" $score                 \
+		"$MD_DIM" "$MD_RESET" $highscore
 }
 
 draw_walls() {
@@ -99,7 +107,7 @@ draw_walls() {
 	local bot=$WALL_BL${line// /$WALL_H}$WALL_BR
 
 	tput cup 0 0
-	printf "%b" "$FG_GRAY"
+	printf "%b" "$MD_DIM$FG_GREEN"
 	printf "%s" "$top"
 
 	local y
@@ -110,7 +118,7 @@ draw_walls() {
 
 	tput cup 0 $((CANVAS_HEIGHT - 1))
 	printf "%s" "$bot"
-	printf "%b" "$FG_RESET"
+	printf "%b" "$MD_RESET"
 }
 
 draw_tiles() {
@@ -118,7 +126,7 @@ draw_tiles() {
 	printf -v tiles "%$((GRID_WIDTH))s" ""
 	tiles=${tiles// /$CHAR_TILE }
 
-	printf "%b" "$FG_GRAY"
+	printf "%b" "$MD_DIM$FG_GRAY"
 
 	local y
 	for ((y = 0; y < GRID_HEIGHT; y++)); do
@@ -126,12 +134,16 @@ draw_tiles() {
 		printf "%s" "$tiles"
 	done
 
-	printf "%b" "$FG_RESET"
+	printf "%b" "$MD_RESET"
 }
 
 display_controls() {
 	tput cup $CENTER_X $CANVAS_HEIGHT
-	printf "%s: move       esc: exit" "$KEY_U $KEY_L $KEY_D $KEY_R"
+
+	printf "%s%b: move%b       esc%b: exit%b" \
+		"$KEY_U $KEY_L $KEY_D $KEY_R"         \
+		"$MD_DIM" "$MD_RESET"                 \
+		"$MD_DIM" "$MD_RESET"
 }
 
 update_apple_pos() {
@@ -144,6 +156,7 @@ update_apple_pos() {
 		if ((apple_x == head_x && apple_y == head_y)); then continue; fi
 
 		local is_empty=true
+
 		# avoid the body
 		local i
 		for ((i = 0; i < ${#body_x[@]}; i++)); do
@@ -173,6 +186,7 @@ validate_move() {
 	done
 
 	is_eaten=false
+
 	# check if the apple is eaten
 	if ((head_x == apple_x && head_y == apple_y)); then
 		is_eaten=true
@@ -210,8 +224,8 @@ update_snake_pos() {
 
 handle_input() {
 	# secretly accept arrow keys as input
-	local reply
 	if [[ $REPLY == $'\e' ]]; then
+		local reply
 		read -rsn 2 -t 0.001 reply
 		REPLY+=$reply
 	fi
@@ -256,7 +270,7 @@ game_over() {
 	tput cnorm # make cursor visible
 	stty echo  # turn on echoing
 
-	printf "%bgame over%b\n" "$FG_RED" "$FG_RESET"
+	printf "%bgame over%b\n" "$FG_RED" "$MD_RESET"
 	display_score "end"
 }
 
