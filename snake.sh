@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 #
-# snake.sh: Snake written in Bash
+# snake.sh: A text-based snake game.
 #
 # Author:  Jesse Mirabel <sejjymvm@gmail.com>
 # Date:    January 3, 2026

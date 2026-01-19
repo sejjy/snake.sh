@@ -2,7 +2,7 @@
 
 ## 🐍 snake.sh
 
-Snake written in Bash
+A text-based snake game.
 
 | ![Preview](./preview.png) |
 | :-----------------------: |
