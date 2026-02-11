@@ -1,2 +1,0 @@
-- apple can still spawn in the body
-- char_apple is drawn as char_body when spawned at prev_tail_pos(?)

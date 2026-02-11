@@ -27,6 +27,12 @@ git clone https://github.com/sejjy/snake.sh.git && cd snake.sh && ./snake.sh
 
 #
 
+### Bug
+
+- The apple can still spawn in the body
+
+#
+
 ### References
 
 - [ANSI Escape Sequences](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)
