@@ -19,22 +19,22 @@ FG_MAGENTA="\e[35m"
 FG_CYAN="\e[36m"
 FG_GRAY="\e[90m"
 
-KEY_U="w"
-KEY_L="a"
-KEY_D="s"
-KEY_R="d"
+KEY_U='w'
+KEY_L='a'
+KEY_D='s'
+KEY_R='d'
 
-CHAR_HEAD="0"
-CHAR_BODY="o"
-CHAR_TILE="."
-CHAR_APPLE="@"
+CHAR_HEAD='0'
+CHAR_BODY='o'
+CHAR_TILE='.'
+CHAR_APPLE='@'
 
-WALL_H="─"
-WALL_V="│"
-WALL_TL="┌"
-WALL_TR="┐"
-WALL_BL="└"
-WALL_BR="┘"
+WALL_H='─'
+WALL_V='│'
+WALL_TL='┌'
+WALL_TR='┐'
+WALL_BL='└'
+WALL_BR='┘'
 
 DELAY=0.15
 
@@ -50,16 +50,17 @@ OFFSET_X=$(((COLUMNS - CANVAS_WIDTH) / 2))
 OFFSET_Y=$(((LINES - CANVAS_HEIGHT + 4) / 2))
 CENTER_X=$(((CANVAS_WIDTH - 29) / 2))
 
-# use raw escape sequences instead of forking out to `tput`
 tput() {
 	case $1 in
-		"smcup") printf "\e[?1049h" ;;
-		"rmcup") printf "\e[?1049l" ;;
-		"civis") printf "\e[?25l" ;;
-		"cnorm") printf "\e[?25h" ;;
-		# use x and y coordinates instead of line and column numbers
-		"cup")   printf "\e[%d;%dH" $(($3 + OFFSET_Y + 1)) \
-			                        $(($2 + OFFSET_X + 1)) ;;
+		smcup) printf "\e[?1049h" ;;
+		rmcup) printf "\e[?1049l" ;;
+		civis) printf "\e[?25l" ;;
+		cnorm) printf "\e[?25h" ;;
+		cup)
+			# accept x and y coordinates
+			printf "\e[%d;%dH" $(($3 + OFFSET_Y + 1)) \
+			                   $(($2 + OFFSET_X + 1))
+			;;
 	esac
 }
 
@@ -91,20 +92,22 @@ display_art() {
 }
 
 display_score() {
-	if (($# == 0)); then tput cup $CENTER_X -1; fi
+	if (($# == 0)); then
+		tput cup $CENTER_X -1
+	fi
 
 	printf "%bscore:%b %03d     %bhighscore:%b %03d" \
-		"$MD_DIM" "$MD_RESET" $score                 \
-		"$MD_DIM" "$MD_RESET" $highscore
+	       "$MD_DIM" "$MD_RESET" $score              \
+	       "$MD_DIM" "$MD_RESET" $highscore
 }
 
 draw_walls() {
 	local line
-	printf -v line "%$((CANVAS_WIDTH - 2))s" ""
+	printf -v line "%$((CANVAS_WIDTH - 2))s" ''
 
-	local top=$WALL_TL${line// /$WALL_H}$WALL_TR
-	local mid=$WALL_V$line$WALL_V
-	local bot=$WALL_BL${line// /$WALL_H}$WALL_BR
+	local top="$WALL_TL${line// /$WALL_H}$WALL_TR"
+	local mid="$WALL_V$line$WALL_V"
+	local bot="$WALL_BL${line// /$WALL_H}$WALL_BR"
 
 	tput cup 0 0
 	printf "%b" "$MD_DIM$FG_GREEN"
@@ -123,7 +126,7 @@ draw_walls() {
 
 draw_tiles() {
 	local tiles
-	printf -v tiles "%$((GRID_WIDTH))s" ""
+	printf -v tiles "%$((GRID_WIDTH))s" ''
 	tiles=${tiles// /$CHAR_TILE }
 
 	printf "%b" "$MD_DIM$FG_GRAY"
@@ -141,9 +144,9 @@ display_controls() {
 	tput cup $CENTER_X $CANVAS_HEIGHT
 
 	printf "%s%b: move%b       esc%b: exit%b" \
-		"$KEY_U $KEY_L $KEY_D $KEY_R"         \
-		"$MD_DIM" "$MD_RESET"                 \
-		"$MD_DIM" "$MD_RESET"
+	       "$KEY_U $KEY_L $KEY_D $KEY_R"      \
+	       "$MD_DIM" "$MD_RESET"              \
+	       "$MD_DIM" "$MD_RESET"
 }
 
 update_apple_pos() {
@@ -153,7 +156,9 @@ update_apple_pos() {
 		apple_y=$((RANDOM % GRID_HEIGHT))
 
 		# avoid the head
-		if ((apple_x == head_x && apple_y == head_y)); then continue; fi
+		if ((apple_x == head_x && apple_y == head_y)); then
+			continue
+		fi
 
 		local is_empty=true
 
@@ -166,7 +171,7 @@ update_apple_pos() {
 			fi
 		done
 
-		if $is_empty; then break; fi
+		$is_empty && break
 	done
 
 	draw_char $apple_x $apple_y "$CHAR_APPLE"
@@ -182,7 +187,9 @@ validate_move() {
 	# check self collision
 	local i
 	for ((i = 0; i < ${#body_x[@]}; i++)); do
-		if ((head_x == body_x[i] && head_y == body_y[i])); then return 1; fi
+		if ((head_x == body_x[i] && head_y == body_y[i])); then
+			return 1
+		fi
 	done
 
 	is_eaten=false
@@ -231,16 +238,18 @@ handle_input() {
 	fi
 
 	case $REPLY in
-		$'\e[A' | "$KEY_U") if ((dir_y != 1));  then dir_x=0  dir_y=-1; fi ;;
-		$'\e[B' | "$KEY_D") if ((dir_y != -1)); then dir_x=0  dir_y=1;  fi ;;
-		$'\e[C' | "$KEY_R") if ((dir_x != -1)); then dir_x=1  dir_y=0;  fi ;;
-		$'\e[D' | "$KEY_L") if ((dir_x != 1));  then dir_x=-1 dir_y=0;  fi ;;
+		$'\e[A' | "$KEY_U") ((dir_y !=  1)) && { dir_x=0;  dir_y=-1; } ;;
+		$'\e[B' | "$KEY_D") ((dir_y != -1)) && { dir_x=0;  dir_y=1;  } ;;
+		$'\e[C' | "$KEY_R") ((dir_x != -1)) && { dir_x=1;  dir_y=0;  } ;;
+		$'\e[D' | "$KEY_L") ((dir_x !=  1)) && { dir_x=-1; dir_y=0;  } ;;
 		$'\e') exit 0 ;;
 	esac
 }
 
 init_game() {
-	if ((score > highscore)); then highscore=$score; fi
+	if ((score > highscore)); then
+		highscore=$score
+	fi
 	score=0
 	display_score
 
@@ -291,10 +300,14 @@ main() {
 
 	# game loop
 	while true; do
-		if IFS= read -rsn 1 -t $DELAY; then handle_input; fi
+		if IFS= read -rsn 1 -t $DELAY; then
+			handle_input
+		fi
 
 		# wait for input before moving
-		if ((dir_x == 0 && dir_y == 0)); then continue; fi
+		if ((dir_x == 0 && dir_y == 0)); then
+			continue
+		fi
 
 		prev_head_x=$head_x
 		prev_head_y=$head_y
