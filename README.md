@@ -22,6 +22,14 @@ bash <(curl -s https://raw.githubusercontent.com/sejjy/snake.sh/main/snake.sh)
 Otherwise, clone the repository and run `./snake.sh`:
 
 ```bash
+git clone https://github.com/sejjy/snake.sh.git
+cd snake.sh
+./snake.sh
+```
+
+Or
+
+```bash
 git clone https://github.com/sejjy/snake.sh.git && cd snake.sh && ./snake.sh
 ```
 
