@@ -78,15 +78,21 @@ draw_char() {
 display_art() {
 	printf "%b" "$FG_GREEN"
 
-	tput cup $CENTER_X -5
-	printf "█▀▀ █▀█ █▀█ █ █ █▀▀   █▀▀ █ █"
+	local art=(
+		"█▀▀ █▀█ █▀█ █ █ █▀▀   █▀▀ █ █"
+		"▀▀█ █ █ █▀█ █▀▄ █▀▀   ▀▀█ █▀█"
+		"▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀▀▀ ▀ ▀▀▀ ▀ ▀"
+	)
 
-	tput cup $CENTER_X -4
-	printf "▀▀█ █ █ █▀█ █▀▄ █▀▀   ▀▀█ █▀█"
+	local i
+	for ((i = 0; i < ${#art[@]}; i++)); do
+		tput cup $CENTER_X $((-5 + i))
 
-	tput cup $CENTER_X -3
-	printf "%b" "$MD_DIM"
-	printf "▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀▀▀ ▀ ▀▀▀ ▀ ▀"
+		if ((i == ${#art[@]} - 1)); then
+			printf "%b" "$MD_DIM"
+		fi
+		printf "%s" "${art[$i]}"
+	done
 
 	printf "%b" "$MD_RESET"
 }
