@@ -7,6 +7,41 @@
 # Date:    January 3, 2026
 # License: MIT
 
+#------------------------------------------------------------------------------#
+#   CONSTANTS                                                                  #
+#------------------------------------------------------------------------------#
+
+#------------#
+#   config   #
+#------------#
+
+# seconds between frames
+DELAY=0.15
+
+KEY_U='w'
+KEY_L='a'
+KEY_D='s'
+KEY_R='d'
+
+GRID_WIDTH=20
+GRID_HEIGHT=20
+
+WALL_H='─'
+WALL_V='│'
+WALL_TL='┌'
+WALL_TR='┐'
+WALL_BL='└'
+WALL_BR='┘'
+
+CHAR_HEAD='0'
+CHAR_BODY='o'
+CHAR_TILE='.'
+CHAR_APPLE='@'
+
+#-----------#
+#   style   #
+#-----------#
+
 MD_RESET="\e[0m"
 MD_BOLD="\e[1m"
 MD_DIM="\e[2m"
@@ -19,37 +54,25 @@ FG_MAGENTA="\e[35m"
 FG_CYAN="\e[36m"
 FG_GRAY="\e[90m"
 
-KEY_U='w'
-KEY_L='a'
-KEY_D='s'
-KEY_R='d'
+#------------#
+#   layout   #
+#------------#
 
-CHAR_HEAD='0'
-CHAR_BODY='o'
-CHAR_TILE='.'
-CHAR_APPLE='@'
-
-WALL_H='─'
-WALL_V='│'
-WALL_TL='┌'
-WALL_TR='┐'
-WALL_BL='└'
-WALL_BR='┘'
-
-DELAY=0.15
-
-GRID_WIDTH=20
-GRID_HEIGHT=20
 CANVAS_WIDTH=$((GRID_WIDTH * 2 + 3))
 CANVAS_HEIGHT=$((GRID_HEIGHT + 2))
 
-# get the terminal size
+# get the values of LINES and COLUMNS
 shopt -s checkwinsize; (:;:)
 
 OFFSET_X=$(((COLUMNS - CANVAS_WIDTH) / 2))
 OFFSET_Y=$(((LINES - CANVAS_HEIGHT + 4) / 2))
 CENTER_X=$(((CANVAS_WIDTH - 29) / 2))
 
+#------------------------------------------------------------------------------#
+#   FUNCTIONS                                                                  #
+#------------------------------------------------------------------------------#
+
+# use escape codes instead of forking out to tput
 tput() {
 	case $1 in
 		smcup) printf "\e[?1049h" ;;
@@ -57,7 +80,7 @@ tput() {
 		civis) printf "\e[?25l" ;;
 		cnorm) printf "\e[?25h" ;;
 		cup)
-			# accept x and y coordinates
+			# x and y coordinates
 			printf "\e[%d;%dH" $(($3 + OFFSET_Y + 1)) \
 			                   $(($2 + OFFSET_X + 1))
 			;;
@@ -98,13 +121,11 @@ display_art() {
 }
 
 display_score() {
-	if (($# == 0)); then
-		tput cup $CENTER_X -1
-	fi
+	tput cup $CENTER_X -1
 
 	printf "%bscore:%b %03d     %bhighscore:%b %03d" \
-	       "$MD_DIM" "$MD_RESET" $score              \
-	       "$MD_DIM" "$MD_RESET" $highscore
+	       "$MD_DIM" "$MD_RESET" $SCORE              \
+	       "$MD_DIM" "$MD_RESET" $HIGHSCORE
 }
 
 draw_walls() {
@@ -207,7 +228,7 @@ validate_move() {
 		body_x+=("${body_x[-1]}")
 		body_y+=("${body_y[-1]}")
 
-		score=$((score + 1))
+		SCORE=$((SCORE + 1))
 		display_score
 		update_apple_pos
 	fi
@@ -225,18 +246,16 @@ update_snake_pos() {
 	body_x[0]=$prev_head_x
 	body_y[0]=$prev_head_y
 
-	if ! $is_eaten; then
-		# do not draw if the apple is at the previous tail position
-		if ((prev_tail_x != apple_x || prev_tail_y != apple_y)); then
-			draw_char "$prev_tail_x" "$prev_tail_y" "$CHAR_TILE"
-		fi
+	# do not draw if the apple is at the previous tail position
+	if ! $is_eaten && ((prev_tail_x != apple_x || prev_tail_y != apple_y)); then
+		draw_char "$prev_tail_x" "$prev_tail_y" "$CHAR_TILE"
 	fi
 	draw_char $prev_head_x $prev_head_y "$CHAR_BODY"
 	draw_char $head_x $head_y "$CHAR_HEAD"
 }
 
 handle_input() {
-	# secretly accept arrow keys as input
+	# accept arrow keys as input
 	if [[ $REPLY == $'\e' ]]; then
 		local reply
 		read -rsn 2 -t 0.001 reply
@@ -244,19 +263,19 @@ handle_input() {
 	fi
 
 	case $REPLY in
-		$'\e[A' | "$KEY_U") ((dir_y !=  1)) && { dir_x=0;  dir_y=-1; } ;;
-		$'\e[B' | "$KEY_D") ((dir_y != -1)) && { dir_x=0;  dir_y=1;  } ;;
-		$'\e[C' | "$KEY_R") ((dir_x != -1)) && { dir_x=1;  dir_y=0;  } ;;
-		$'\e[D' | "$KEY_L") ((dir_x !=  1)) && { dir_x=-1; dir_y=0;  } ;;
+		$'\e[A' | "$KEY_U") ((dir_y !=  1)) && { dir_x=0  dir_y=-1; } ;;
+		$'\e[B' | "$KEY_D") ((dir_y != -1)) && { dir_x=0  dir_y=1; } ;;
+		$'\e[C' | "$KEY_R") ((dir_x != -1)) && { dir_x=1  dir_y=0; } ;;
+		$'\e[D' | "$KEY_L") ((dir_x !=  1)) && { dir_x=-1 dir_y=0; } ;;
 		$'\e') exit 0 ;;
 	esac
 }
 
 init_game() {
-	if ((score > highscore)); then
-		highscore=$score
+	if ((SCORE > HIGHSCORE)); then
+		HIGHSCORE=$SCORE
 	fi
-	score=0
+	SCORE=0
 	display_score
 
 	# set spawn points
@@ -285,12 +304,13 @@ game_over() {
 	tput cnorm # make cursor visible
 	stty echo  # turn on echoing
 
-	printf "%bgame over%b\n" "$FG_RED" "$MD_RESET"
-	display_score "end"
+	printf "%bGAME OVER%b\n" "$FG_RED" "$MD_RESET"
+	printf "%bscore%b:     %d\n" "$MD_DIM" "$MD_RESET" $SCORE
+	printf "%bhighscore%b: %d\n" "$MD_DIM" "$MD_RESET" $HIGHSCORE
 }
 
 main() {
-	trap "game_over; printf '\n'" EXIT
+	trap game_over EXIT
 
 	tput smcup # enable the alternative buffer
 	tput civis # make cursor invisible
@@ -300,27 +320,28 @@ main() {
 	draw_walls
 	display_controls
 
-	score=0
-	highscore=0
+	SCORE=0
+	HIGHSCORE=0
 	init_game
 
 	# game loop
 	while true; do
-		if IFS= read -rsn 1 -t $DELAY; then
+		if read -rsn 1 -t $DELAY; then
 			handle_input
 		fi
 
-		# wait for input before moving
+		# wait for input before starting
 		if ((dir_x == 0 && dir_y == 0)); then
 			continue
 		fi
 
+		# move the head
 		prev_head_x=$head_x
 		prev_head_y=$head_y
 		head_x=$((head_x + dir_x))
 		head_y=$((head_y + dir_y))
 
-		# validate new head position before moving the snake
+		# validate new head position
 		if ! validate_move; then
 			read -rsn 1
 			init_game
@@ -328,6 +349,7 @@ main() {
 			continue
 		fi
 
+		# move the body
 		update_snake_pos
 	done
 }
