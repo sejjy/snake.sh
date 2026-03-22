@@ -16,21 +16,21 @@ A text-based snake game.
 To play without downloading, run:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/sejjy/snake.sh/main/snake.sh)
+bash <(curl -s https://raw.githubusercontent.com/sejjy/snake/main/snake.sh)
 ```
 
 Otherwise, clone the repository and run `./snake.sh`:
 
 ```bash
-git clone https://github.com/sejjy/snake.sh.git
-cd snake.sh
+git clone https://github.com/sejjy/snake.git
+cd snake
 ./snake.sh
 ```
 
 Or
 
 ```bash
-git clone https://github.com/sejjy/snake.sh.git && cd snake.sh && ./snake.sh
+git clone https://github.com/sejjy/snake.git && cd snake && ./snake.sh
 ```
 
 #
