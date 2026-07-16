@@ -304,8 +304,8 @@ game_over() {
 	tput cnorm # make cursor visible
 	stty echo  # turn on echoing
 
-	printf "%bGAME OVER%b\n" "$FG_RED" "$MD_RESET"
-	printf "%bscore%b:     %d\n" "$MD_DIM" "$MD_RESET" $SCORE
+	printf "%bGAME OVER!%b\n" "$MD_BOLD$FG_RED" "$MD_RESET"
+	printf "%b    score%b: %d\n" "$MD_DIM" "$MD_RESET" $SCORE
 	printf "%bhighscore%b: %d\n" "$MD_DIM" "$MD_RESET" $HIGHSCORE
 }
 
