@@ -2,7 +2,7 @@
 
 ## 🐍 snake.sh
 
-A text-based snake game.
+A text-based snake game
 
 | ![Preview](./preview.png) |
 | :-----------------------: |
@@ -11,7 +11,7 @@ A text-based snake game.
 
 #
 
-### Play
+### How to play
 
 To play without downloading, run:
 
@@ -27,7 +27,7 @@ cd snake
 ./snake.sh
 ```
 
-Or
+Or:
 
 ```bash
 git clone https://github.com/sejjy/snake.git && cd snake && ./snake.sh
@@ -35,14 +35,13 @@ git clone https://github.com/sejjy/snake.git && cd snake && ./snake.sh
 
 #
 
-### Bug
+### Known issue
 
-- The apple can still spawn in the body
+- The apple can sometimes spawn in the body
 
 #
 
 ### References
 
 - [ANSI Escape Sequences](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797)
-- [pure-bash-bible](https://github.com/dylanaraps/pure-bash-bible)
 - [snake-term](https://github.com/abuharth/snake-term)
